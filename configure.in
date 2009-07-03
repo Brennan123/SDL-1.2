@@ -531,6 +531,28 @@ AC_HELP_STRING([--enable-pulseaudio-shared], [dynamically load PulseAudio suppor
     fi
 }
 
+Checklibogc()
+{
+	AC_MSG_CHECKING(for installed libogc)
+	have_libogc=no
+	if test x"$DEVKITPRO" != x -a x$DEVKITPRO != x'"$DEVKITPRO"'; then
+		OGC_CFLAGS="-mogc -I$DEVKITPRO/libogc/include"
+        save_CFLAGS="$CFLAGS"
+        CFLAGS="$CFLAGS $OGC_CFLAGS"
+        AC_TRY_COMPILE([
+          #include <gccore.h>
+        ],[
+          GXFifoObj fifo;
+        ],[
+        have_libogc=yes
+        ])
+        CFLAGS="$save_CFLAGS"
+	fi
+	AC_MSG_RESULT($have_libogc)
+	if test x$have_mme = xyes; then
+		EXTRA_CFLAGS="$EXTRA_CFLAGS -I$DEVKITPRO/libogc/include"
+	fi
+}
 CheckARTSC()
 {
     AC_ARG_ENABLE(arts,
@@ -2741,6 +2763,31 @@ case "$host" in
         fi
         # The RISC OS platform requires special setup.
         EXTRA_LDFLAGS="$EXTRA_LDFLAGS -ljpeg -ltiff -lpng -lz"
+        ;;
+    powerpc-devkitpro-eabi)
+		ARCH=gekko
+		Checklibogc
+        # Set up files for the video library
+        if test x$enable_video = xyes; then
+            AC_DEFINE(SDL_VIDEO_DRIVER_LIBOGC)
+            SOURCES="$SOURCES $srcdir/src/video/libogc/*.c"
+            have_video=yes
+        fi
+        # Set up files for the joystick library
+        if test x$enable_joystick = xyes; then
+            AC_DEFINE(SDL_JOYSTICK_LIBOGC)
+            SOURCES="$SOURCES $srcdir/src/joystick/libogc/*.c"
+            have_joystick=yes
+        fi
+        # Set up files for the timer library
+        if test x$enable_timers = xyes; then
+            AC_DEFINE(SDL_TIMER_LIBOGC)
+            SOURCES="$SOURCES $srcdir/src/timer/libogc/*.c"
+            have_timers=yes
+        fi
+        # The libogc platform requires special setup.
+        SDLMAIN_SOURCES="$srcdir/src/main/libogc/*.c"
+        SDL_LIBS="-lSDLmain $SDL_LIBS"
         ;;
     *)
         AC_MSG_ERROR([
