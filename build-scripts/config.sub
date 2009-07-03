@@ -230,6 +230,10 @@ case $os in
 		basic_machine=m68k-atari
 		os=-mint
 		;;
+	-gekko)
+		basic_machine=powerpc-devkitpro
+		os=-eabi
+		;;
 esac
 
 # Decode aliases for certain CPU-COMPANY combinations.
